@@ -2,7 +2,7 @@ Attribute VB_Name = "BackingUpFiles"
 '--------------------------------------------------------------------------------------------------------------- _
 ______________________________________________ Module Name: Backing Up Files __________________________________ _
 ----------------------------------------------------------------------------------------------------------------- _
-'//////////////////////////// This array contains scripts designed to make backup copies of your file \\\\\\\\\\\\ _
+'//////////////////////////// This Module contains scripts designed to make backup copies of your file \\\\\\\\\\\\ _
 ///////////////////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ List Of Subroutines ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ _
@@ -87,5 +87,6 @@ Application.EnableEvents = True
 Application.ScreenUpdating = True
 Application.Calculation = xlCalculationAutomatic
 End Sub
+
 
 
