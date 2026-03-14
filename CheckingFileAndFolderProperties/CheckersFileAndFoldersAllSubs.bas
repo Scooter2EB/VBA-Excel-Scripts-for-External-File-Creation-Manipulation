@@ -22,9 +22,13 @@ Attribute VB_Name = "CheckersFileManipulation"
 '5. Check_Folder_Make_Folder_Basic
 '       This checks if a given folder exists and has the option to create the folder if it does not
 '6. Checker_FileName_SpecialCharacters
+'       Checks the given file name for the presence of special characters, alerts the user and allows them to try again
+'7. Save_And_Close_All_Workbooks_Except_This_One
+'   Loops through all instances of excel and saves and closes every file except the current file
 
 '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Module Declarations $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-'All of these declared variables are used by Check_If_File_Open_AllInstances. That sub is a modified version of the script I got from
+'All of these declared variables are used by Check_If_File_Open_AllInstances and Save_And_Close_All_Workbooks_Except_This_One.
+'The first one is a modified version of the script I got from
 '    https://stackoverflow.com/questions/30363748/having-multiple-excel-instances-launched-how-can-i-get-the-application-object-f
 'They have to be declared here for that sub to work. If you want to know why, check the link
 Private Declare PtrSafe Function AccessibleObjectFromWindow Lib "oleacc" ( _
@@ -32,6 +36,7 @@ Private Declare PtrSafe Function AccessibleObjectFromWindow Lib "oleacc" ( _
 Private Declare PtrSafe Function FindWindowExA Lib "user32" ( _
     ByVal hwndParent As LongPtr, ByVal hwndChildAfter As LongPtr, _
     ByVal lpszClass As String, ByVal lpszWindow As String) As LongPtr
+
 Private Sub Checker_Length_FullPath(FullPath, Display_Msg, Len_Excess)
 '\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 '____________________________________ Checking the Full File path length ____________________________________
@@ -537,5 +542,108 @@ Special_Chr:
     End If
 End If
 
-End Sub
+Public Sub Save_And_Close_All_Workbooks_Except_This_One()
+'_______________________________ Saving and Closing all Excel Files Except the Current One ___________________
+'///////////////////// This script goes through the computer and checks for each excel file that is open\\\\\\ _
+//////////////////// verifies that it is not this one and then closes them. Has some tools to address \\\\\\\\ _
+////////////////// Some interesting complications that occur when attempting to do this. Listed Below. \\\\\\\
 
+'((((((((((((((((((((( Background on Finding and Closing Excel; Instances vs Files; lingering VBA projects )))))
+'Finding and closing all open excel files is not as straight forward as it seems because multiple excel files may _
+'or may not be open under the same INSTANCE (may not be the correct term but I am using it) of excel. An Instance _
+'of excel is a single version of the Excel application being open. In the windows task manager it is represented _
+'as one instance of excel. If you have multiple files open under that instance, you can see them in the drop-down _
+'below that instance. It is effectively multiple files being run and managed by a single version of the excel application. _
+'You will notice in VBA each of the files will show in the project window, and when copypasting between files you _
+'will have full access to the different types of pasting (i.e. Values, formulas, formats etc.). If you already have _
+'an excel file open, and you open up another excel file through the open file (from menu, script, etc.), they will _
+'open in the same instance. However, if you open up your files through File Explorer, they will TYPICALLY open _
+'up in separate instances of excel
+'When a file is opened in a different instance of excel, it will not show up in the VBA project window of the other instance. _
+'If you copypaste between them, you will get paste options more akin to pasting from a web browser or word doc. _
+'In windows task manager, you should see 2 different version of the excel application running. In general AVOID _
+'doing multiple instances of excel.
+
+'So what does this have to do with using scripts to open and close excel files? Different instances make things _
+'more complicated and require a separate script. _
+'Typically, if you wanted to close all of the excel files, you would loop through excels premade collection of workbooks _
+'and just save and close each one. However, this collection of workbooks only contains all workooks under the instance of _
+'excel which the calling script belongs to. Inorder to close excel files open under other instances of scripts, you first _
+'have to search the computer for each instance of excel, and then close each of those files.
+
+'Currently, this script starts by using the easy way and looking through each file in the current instance. It then _
+'checks for multple instances. It is done this way to avoid a weird situation that occurs when using the script that _
+'closes by instance of excel. Currently, the script will close the files, but will still leave any VBA projects open in _
+'the project window. This is not an issue for non-macro enable files. Looking at the source below, there has never _
+'really been a great solution to it. Further refinements of the script might solve it but right now its an issue. _
+'In any case, unless you are opening hundereds of files, it should be fine.
+
+'https://answers.microsoft.com/en-us/msoffice/forum/all/workbooks-not-being-removed-from-vbaproject-window/af63ef9d-c247-4a98-8909-b0e9c92bce26
+
+
+'//////////////////should save and close all open workbooks\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+Name_SourceBook = ActiveWorkbook.Name 'Change this to the workbook Name you don't want closed
+
+
+
+Msg_DoIt = MsgBox("Would you like to save and close all open workbook excluding this one?", vbYesNo, "Save and close?")
+If Msg_DoIt <> vbYes Then: Exit Sub
+
+'####### Section 1: Closing All files under the current Instance of Excel ########################
+For Each Wrkbook In Workbooks
+    If Wrkbook.Name <> Name_SourceBook Then
+        'Wrkbook.Save
+        Wrkbook.Close True
+    End If
+Next
+
+'############ Section 2: Finding Excel Instances and Closing Files within them ##############
+
+'#### This should close all instances
+'Came From https://stackoverflow.com/questions/30363748/having-multiple-excel-instances-launched-how-can-i-get-the-application-object-f
+Dim xl As Application
+Dim guid&(0 To 3), acc As Object, hwnd, hwnd2, hwnd3
+guid(0) = &H20400
+guid(1) = &H0
+guid(2) = &HC0
+guid(3) = &H46000000
+
+Set GetExcelInstances = New Collection 'Creating a collection of open excel instances
+Do
+    hwnd = FindWindowExA(0, hwnd, "XLMAIN", vbNullString)
+    If hwnd = 0 Then: Exit Do
+    hwnd2 = FindWindowExA(hwnd, 0, "XLDESK", vbNullString)
+    hwnd3 = FindWindowExA(hwnd2, 0, "EXCEL7", vbNullString)
+    If AccessibleObjectFromWindow(hwnd3, &HFFFFFFF0, guid(0), acc) = 0 Then
+        GetExcelInstances.Add acc.Application
+    End If
+Loop
+'############ End of section from Website
+For Each xl In GetExcelInstances 'loop through excel instances
+    'Debug.Print "Handle: " & xl.ActiveWorkbook.FullName 'loop through workbooks in xcel instances
+    On Error GoTo Close_App
+    For Each Wrkbook In xl.Workbooks
+        If Current_Wrkbook_Count_Rep > 3 Then 'if it repeats the current workbook 3 times in a row, quit.
+            Exit For                          'Unsure if closing workbooks changes list in For each workbook, so a precaution
+        ElseIf Wrkbook.Name <> Name_SourceBook Then
+            'Debug.Print Wrkbook.Name
+            Wrkbook.Close True
+            Current_Wrkbook_Count_Rep = 0
+        Else
+            Current_Wrkbook_Count_Rep = Current_Wrkbook_Count_Rep + 1
+            Execl_Instance_Contains_Current = 1
+        End If
+    Next
+    If Execl_Instance_Contains_Current = 1 Then
+        Execl_Instance_Contains_Current = 0
+    Else
+Close_App:
+        On Error GoTo -1: On Error Resume Next
+        xl.Quit
+    End If
+Next
+
+Set GetExcelInstances = Nothing
+
+End Sub
