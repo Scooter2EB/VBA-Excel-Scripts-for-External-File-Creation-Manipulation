@@ -159,6 +159,7 @@ End With
 
 Exit_1:
 End Sub
+
 Public Sub FolderFinder(FilePath_2)
 'V 1.0
 '\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -245,6 +246,7 @@ End With
 
 Exit_1:
 End Sub
+
 Private Sub FileSaveAs(FileName_2, FilePath_2, Title_1, Extension_1)
 '\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 '____________________________________ Save Current File as New one ____________________________________
@@ -408,6 +410,7 @@ End If
 ThisWorkbook.SaveAs FilePath_2 & FileName_2
 Exit_1:
 End Sub
+
 Public Sub CopyPaste_PrintArea_NewWorkbook_WithOutAutosave()
 '_________________________ Copy the Print selected area to a new workbook_____________________________
 '//////////////////////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ _
